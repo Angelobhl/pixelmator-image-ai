@@ -1,0 +1,11 @@
+# GUI Framework
+PySide6>=6.6.0
+
+# OpenRouter API (uses OpenAI SDK compatible interface)
+openai>=1.0.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Utilities
+python-dotenv>=1.0.0

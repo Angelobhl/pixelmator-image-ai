@@ -1,0 +1,13 @@
+{
+    "api_key": "your-openrouter-api-key-here",
+    "default_model": "google/gemini-3-pro-image-preview",
+    "temperature": 0.7,
+    "max_tokens": 4096,
+    "max_image_size": 2048,
+    "image_quality": 85,
+    "window_opacity": 0.9,
+    "auto_hide": true,
+    "show_notification": true,
+    "play_sound": false,
+    "debug_mode": false
+}

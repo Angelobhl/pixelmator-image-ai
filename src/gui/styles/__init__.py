@@ -1,0 +1,1 @@
+"""QSS stylesheets for the application."""
