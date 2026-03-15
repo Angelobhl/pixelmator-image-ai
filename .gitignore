@@ -17,12 +17,11 @@ ENV/
 # Project specific
 temp/
 cache/
-config/user_config.json
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
+logs/
 
 # Environment
 .env
+
+# macOS
+.DS_Store
+**/.DS_Store

@@ -1,12 +1,14 @@
 """
 Configuration management module.
-Handles application settings and persistence.
+Handles application settings using environment variables.
 """
 
-import json
-from dataclasses import dataclass, asdict, field
+import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+from dotenv import load_dotenv
 
 
 @dataclass
@@ -37,46 +39,51 @@ class AppConfig:
 
 
 class ConfigManager:
-    """Configuration manager for loading and saving settings."""
+    """Configuration manager for loading settings from environment variables."""
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.config_dir = project_root / "config"
-        self.default_config_path = self.config_dir / "default_config.json"
-        self.user_config_path = self.config_dir / "user_config.json"
         self.config: AppConfig = AppConfig()
+        self._load_from_env()
+
+    def _load_from_env(self) -> None:
+        """Load configuration from environment variables."""
+        # Load .env file if it exists
+        env_path = self.project_root / ".env"
+        load_dotenv(env_path)
+
+        # Load each configuration from environment variables
+        # API Configuration
+        self.config.api_key = os.getenv("GEMINI_BRIDGE_API_KEY", self.config.api_key)
+        self.config.default_model = os.getenv("GEMINI_BRIDGE_DEFAULT_MODEL", self.config.default_model)
+        self.config.temperature = float(os.getenv("GEMINI_BRIDGE_TEMPERATURE", str(self.config.temperature)))
+        self.config.max_tokens = int(os.getenv("GEMINI_BRIDGE_MAX_TOKENS", str(self.config.max_tokens)))
+
+        # Image Processing Configuration
+        self.config.max_image_size = int(os.getenv("GEMINI_BRIDGE_MAX_IMAGE_SIZE", str(self.config.max_image_size)))
+        self.config.image_quality = int(os.getenv("GEMINI_BRIDGE_IMAGE_QUALITY", str(self.config.image_quality)))
+
+        # UI Configuration
+        self.config.window_opacity = float(os.getenv("GEMINI_BRIDGE_WINDOW_OPACITY", str(self.config.window_opacity)))
+        self.config.auto_hide = self._parse_bool(os.getenv("GEMINI_BRIDGE_AUTO_HIDE", str(self.config.auto_hide)))
+        self.config.show_notification = self._parse_bool(os.getenv("GEMINI_BRIDGE_SHOW_NOTIFICATION", str(self.config.show_notification)))
+        self.config.play_sound = self._parse_bool(os.getenv("GEMINI_BRIDGE_PLAY_SOUND", str(self.config.play_sound)))
+
+        # Debug Mode
+        self.config.debug_mode = self._parse_bool(os.getenv("GEMINI_BRIDGE_DEBUG_MODE", str(self.config.debug_mode)))
+
+        # Paths
+        self.config.temp_dir = os.getenv("GEMINI_BRIDGE_TEMP_DIR", self.config.temp_dir)
+        self.config.cache_dir = os.getenv("GEMINI_BRIDGE_CACHE_DIR", self.config.cache_dir)
+
+    @staticmethod
+    def _parse_bool(value: str) -> bool:
+        """Parse a boolean value from string."""
+        return value.lower() in ("true", "1", "yes", "on")
 
     def load(self) -> AppConfig:
-        """Load configuration from files."""
-        # Load default config first
-        if self.default_config_path.exists():
-            with open(self.default_config_path, 'r', encoding='utf-8') as f:
-                default_data = json.load(f)
-                self.config = AppConfig(**default_data)
-
-        # Override with user config if exists
-        if self.user_config_path.exists():
-            with open(self.user_config_path, 'r', encoding='utf-8') as f:
-                user_data = json.load(f)
-                # Merge user config into default
-                for key, value in user_data.items():
-                    if hasattr(self.config, key):
-                        setattr(self.config, key, value)
-
+        """Load configuration (already loaded in __init__)."""
         return self.config
-
-    def save(self) -> None:
-        """Save current configuration to user config file."""
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.user_config_path, 'w', encoding='utf-8') as f:
-            json.dump(asdict(self.config), f, indent=4, ensure_ascii=False)
-
-    def reset(self) -> None:
-        """Reset to default configuration."""
-        if self.user_config_path.exists():
-            self.user_config_path.unlink()
-        self.config = AppConfig()
-        self.load()
 
     def get_temp_dir(self) -> Path:
         """Get absolute path to temp directory."""
